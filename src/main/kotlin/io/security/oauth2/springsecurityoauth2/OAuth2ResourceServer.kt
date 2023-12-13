@@ -15,13 +15,10 @@ class OAuth2ResourceServer {
     fun securityFilterChain1(http: HttpSecurity): SecurityFilterChain {
         http {
             authorizeRequests {
-                authorize("/photos/1", hasAuthority("ROLE_photo"))
-                authorize("/photos/3", hasAuthority("ROLE_default-roles-oauth2"))
                 authorize(anyRequest, authenticated)
             }
             oauth2ResourceServer {
                 jwt {
-                    jwtAuthenticationConverter = jwtAuthenticationConverter()
                 }
             }
         }
@@ -33,7 +30,6 @@ class OAuth2ResourceServer {
     fun securityFilterChain2(http: HttpSecurity): SecurityFilterChain {
         http {
             authorizeRequests {
-                authorize("/photos/2", permitAll)
                 authorize(anyRequest, authenticated)
             }
             oauth2ResourceServer {
@@ -44,11 +40,5 @@ class OAuth2ResourceServer {
         }
 
         return http.build()
-    }
-
-    private fun jwtAuthenticationConverter(): JwtAuthenticationConverter {
-        val jwtAuthenticationConverter = JwtAuthenticationConverter()
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(CustomRoleConvert())
-        return jwtAuthenticationConverter
     }
 }
