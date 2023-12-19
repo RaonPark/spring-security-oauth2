@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.web.servlet.invoke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.client.RestTemplate
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -15,11 +16,11 @@ class OAuth2ResourceServer {
     fun securityFilterChain1(http: HttpSecurity): SecurityFilterChain {
         http {
             authorizeRequests {
+                authorize("/", permitAll)
                 authorize(anyRequest, authenticated)
             }
-            oauth2ResourceServer {
-                jwt {
-                }
+            oauth2Login {
+                defaultSuccessUrl("/", true)
             }
         }
 
@@ -27,18 +28,7 @@ class OAuth2ResourceServer {
     }
 
     @Bean
-    fun securityFilterChain2(http: HttpSecurity): SecurityFilterChain {
-        http {
-            authorizeRequests {
-                authorize(anyRequest, authenticated)
-            }
-            oauth2ResourceServer {
-                jwt {
-
-                }
-            }
-        }
-
-        return http.build()
+    fun restTemplate(): RestTemplate {
+        return RestTemplate()
     }
 }
