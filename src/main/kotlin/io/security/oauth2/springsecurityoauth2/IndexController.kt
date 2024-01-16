@@ -20,60 +20,10 @@ import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
 @RestController
-class IndexController @Autowired constructor(
-    private val clientRegistrationRepository: ClientRegistrationRepository
-) {
+class IndexController {
     @GetMapping("/")
     fun index(): String {
         return "index"
     }
 
-    @GetMapping("/user")
-    fun user(accessToken: String): OAuth2User {
-        val clientRegistration = clientRegistrationRepository.findByRegistrationId("keycloak")
-        val oAuth2AccessToken = OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, accessToken, Instant.now(), Instant.MAX)
-
-        val oAuth2UserRequest = OAuth2UserRequest(clientRegistration, oAuth2AccessToken)
-        val defaultOAuth2UserService = DefaultOAuth2UserService()
-        val oAuth2User = defaultOAuth2UserService.loadUser(oAuth2UserRequest)
-
-        return oAuth2User
-    }
-
-    @GetMapping("/oidc")
-    fun oidc(accessToken: String, idToken: String): OAuth2User {
-        val clientRegistration = clientRegistrationRepository.findByRegistrationId("keycloak")
-        val oAuth2AccessToken = OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, accessToken, Instant.now(), Instant.MAX)
-
-        val idTokenClaims = mutableMapOf<String, Any>()
-        idTokenClaims[IdTokenClaimNames.ISS] = "http://localhost:8081/realms/oauth2"
-        idTokenClaims[IdTokenClaimNames.SUB] = "OIDC0"
-        idTokenClaims["preferred_username"] = "user"
-
-        val oidcIdToken = OidcIdToken(idToken, Instant.now(), Instant.MAX, idTokenClaims)
-
-        val oidcUserRequest = OidcUserRequest(clientRegistration, oAuth2AccessToken, oidcIdToken)
-        val oidcUserService = OidcUserService()
-        val oidcUser = oidcUserService.loadUser(oidcUserRequest)
-
-        return oidcUser
-    }
-
-    @GetMapping("/securityUser")
-    fun securityUser(authentication: Authentication): OAuth2User {
-//        val authentication1 = SecurityContextHolder.getContext().authentication as OAuth2AuthenticationToken
-        val authentication2 = authentication as OAuth2AuthenticationToken
-        val oAuth2User = authentication2.principal as OAuth2User
-        return oAuth2User
-    }
-
-    @GetMapping("/oAuth2User")
-    fun oAuth2User(@AuthenticationPrincipal oAuth2User: OAuth2User) {
-        print("oAuth2User = $oAuth2User")
-    }
-
-    @GetMapping("/oidcUser")
-    fun oidcUser(@AuthenticationPrincipal oidcUser: OidcUser) {
-        print("oidcUser = $oidcUser")
-    }
 }
