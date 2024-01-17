@@ -1,6 +1,19 @@
 package io.security.oauth2.springsecurityoauth2.controller
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.oauth2.client.OAuth2AuthorizationSuccessHandler
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedClientManager
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository
+import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -9,10 +22,59 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @Controller
-class LoginController {
+class LoginController @Autowired constructor(
+    private val oAuth2AuthorizedClientManager: DefaultOAuth2AuthorizedClientManager,
+    private val oAuth2AuthorizedClientRepository: OAuth2AuthorizedClientRepository
+) {
     @GetMapping("/oauth2Login")
     fun oauth2Login(model: Model, request: HttpServletRequest, response: HttpServletResponse): String {
-        return "redirect:/"
+
+        /**
+         * 익명 사용자가 나오고(anonymousUser)
+         * authorize grant type은 password가 된다.
+         */
+        val authentication = SecurityContextHolder.getContext().authentication
+
+        val authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId("keycloak")
+            .principal(authentication)
+            .attribute(HttpServletRequest::class.java.name, request)
+            .attribute(HttpServletResponse::class.java.name, response)
+            .build()
+
+        val successHandler = OAuth2AuthorizationSuccessHandler { // sam
+            authorizedClient: OAuth2AuthorizedClient, principal: Authentication, attributes: MutableMap<String, Any> ->
+            oAuth2AuthorizedClientRepository.saveAuthorizedClient(authorizedClient, principal,
+                attributes[HttpServletRequest::class.java.name] as HttpServletRequest,
+                attributes[HttpServletResponse::class.java.name] as HttpServletResponse)
+
+            println("authorizedClient=$authorizedClient")
+            println("principal=$principal")
+            println("attributes=$attributes")
+        }
+
+        oAuth2AuthorizedClientManager.setAuthorizationSuccessHandler(successHandler)
+
+        val authorizedClient: OAuth2AuthorizedClient? = oAuth2AuthorizedClientManager.authorize(authorizeRequest)
+
+        if(authorizedClient != null) {
+            val oAuth2UserService = DefaultOAuth2UserService()
+            val clientRegistration = authorizedClient.clientRegistration
+            val accessToken = authorizedClient.accessToken
+            val oAuth2UserRequest = OAuth2UserRequest(clientRegistration, accessToken)
+            val oAuth2User = oAuth2UserService.loadUser(oAuth2UserRequest)
+
+            val authorityMapper = SimpleAuthorityMapper()
+            authorityMapper.setPrefix("SYSTEM_")
+            val grantedAuthorities: Set<GrantedAuthority> = authorityMapper.mapAuthorities(oAuth2User.authorities)
+
+            val oAuth2AuthenticationToken = OAuth2AuthenticationToken(oAuth2User, grantedAuthorities, clientRegistration.registrationId)
+
+            SecurityContextHolder.getContext().authentication = oAuth2AuthenticationToken
+
+            model.addAttribute("oAuth2AuthenticationToken", oAuth2AuthenticationToken)
+        }
+
+        return "home"
     }
 
     @GetMapping("/logout")
