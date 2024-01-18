@@ -23,7 +23,6 @@ spring:
               - openid
               - profile
             client-authentication-method: client_secret_basic
-            redirect-uri: http://localhost:8080/client
             provider: keycloak
 #          keycloak:
 #            client-id: oauth2-client-app
