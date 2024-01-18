@@ -14,25 +14,25 @@ spring:
 #            client-authentication-method: client_secret_basic
 #            redirect-uri: http://localhost:8080/client
 #            provider: keycloak
-#          keycloak:
-#            client-id: oauth2-client-app
-#            client-secret: P7441YD2ns92oL4GVtkvOoyBRwOEjA0e
-#            client-name: oauth2-client-app
-#            authorization-grant-type: password
-#            scope:
-#              - openid
-#              - profile
-#            client-authentication-method: client_secret_basic
-#            redirect-uri: http://localhost:8080/client
-#            provider: keycloak
           keycloak:
             client-id: oauth2-client-app
             client-secret: P7441YD2ns92oL4GVtkvOoyBRwOEjA0e
             client-name: oauth2-client-app
-            authorization-grant-type: client_credentials
+            authorization-grant-type: password
+            scope:
+              - openid
+              - profile
             client-authentication-method: client_secret_basic
             redirect-uri: http://localhost:8080/client
             provider: keycloak
+#          keycloak:
+#            client-id: oauth2-client-app
+#            client-secret: P7441YD2ns92oL4GVtkvOoyBRwOEjA0e
+#            client-name: oauth2-client-app
+#            authorization-grant-type: client_credentials
+#            client-authentication-method: client_secret_basic
+#            redirect-uri: http://localhost:8080/client
+#            provider: keycloak
         provider:
           keycloak:
             issuer-uri: http://localhost:8081/realms/oauth2
