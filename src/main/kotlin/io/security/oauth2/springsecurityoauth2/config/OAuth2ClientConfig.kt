@@ -25,6 +25,7 @@ class OAuth2ClientConfig @Autowired constructor(
                 authorize("/", permitAll)
                 authorize("/oauth2Login", permitAll)
                 authorize("/client", permitAll)
+                authorize("/v2/oauth2Login", permitAll)
                 authorize(anyRequest, authenticated)
             }
 
